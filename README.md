@@ -1,55 +1,17 @@
-# CodeVector Internship - Take Home Task
+# Finder & Filter (Keyset Pagination Product Catalog)
 
 A fast, real-time products catalog paginated with keyset cursors. It handles a database of **200,000 products** dynamically, preventing duplicate or skipped items even when concurrent updates are made to the database.
 
-Built using:
-* **Backend:** Node.js, Express, MongoDB (Native Driver)
-* **Frontend:** Next.js (App Router, Client-side state, Vanilla CSS)
+## Tech Stack
+* **Backend:** Node.js, Express, MongoDB
+* **Frontend:** Next.js (App Router, Vanilla CSS)
 
 ---
 
-## Why Keyset Pagination?
+## Getting Started
 
-In traditional page-based pagination (`limit` & `offset`), inserting new items at the top of the list pushes all older records down. If a user is browsing page 1, and 5 new items are added, moving to page 2 (with `offset=20`) will display the last 5 items of page 1 again (duplicates). Conversely, deleting items causes the offset query to skip items.
-
-**Keyset (Cursor-based) Pagination** solves this by requesting records relative to a specific anchor (cursor) rather than an offset. By sorting by `{ created_at: -1, _id: -1 }`, the next page query asks for items:
-`created_at < last_item.created_at OR (created_at == last_item.created_at AND _id < last_item._id)`
-
-This ensures that any newly inserted items (which have a newer `created_at` timestamp) sit above the current viewing scope and do not cause items to shift downwards into the next pages.
-
----
-
-## Project Structure
-
-```
-codevector/
-├── backend/
-│   ├── .env               # Environment configuration
-│   ├── db.js              # Connection pool logic for MongoDB
-│   ├── index.js           # Express API endpoints
-│   ├── seed.js            # Seeding script for 200,000 products
-│   ├── test.js            # Automated pagination correctness test script
-│   └── package.json
-└── frontend/
-    ├── src/
-    │   └── app/
-    │       ├── globals.css  # Premium layout styles (dark mode, glassmorphism)
-    │       ├── layout.tsx   # Document layout and SEO metadata
-    │       └── page.tsx     # Client-side product grid & state manager
-    └── package.json
-```
-
----
-
-## Installation & Local Setup
-
-### Prerequisite
-* Node.js (v18+)
-* MongoDB running locally (default: `mongodb://127.0.0.1:27017/codevector`) or a MongoDB Atlas connection string.
-
-### 1. Set Up and Run the Backend
-
-1. Navigate to the backend directory:
+### 1. Run the Backend
+1. Go to the backend directory:
    ```bash
    cd backend
    ```
@@ -57,30 +19,17 @@ codevector/
    ```bash
    npm install
    ```
-3. Initialize the `.env` configuration (if using Atlas, replace the URI):
-   ```
-   MONGODB_URI=mongodb://127.0.0.1:27017/codevector
-   PORT=5000
-   ```
-4. Run the seed script to populate 200,000 products and build compound indexes:
+3. Run the seed script to populate 200,000 products:
    ```bash
    npm run seed
    ```
-5. Start the backend development server:
+4. Start the server:
    ```bash
    npm start
    ```
 
-### 2. Run the Verification Tests
-To test pagination stability under concurrent writes, run the test script:
-```bash
-node test.js
-```
-This script will fetch page 1 and 2, simulate a 5-product insertion in the background, navigate forward, and then navigate backwards using cursors to verify that no duplicate items or missed items occur.
-
-### 3. Set Up and Run the Frontend
-
-1. Navigate to the frontend directory:
+### 2. Run the Frontend
+1. Go to the frontend directory:
    ```bash
    cd ../frontend
    ```
@@ -88,7 +37,7 @@ This script will fetch page 1 and 2, simulate a 5-product insertion in the backg
    ```bash
    npm install
    ```
-3. Start the Next.js development server:
+3. Start the development server:
    ```bash
    npm run dev
    ```
@@ -96,37 +45,11 @@ This script will fetch page 1 and 2, simulate a 5-product insertion in the backg
 
 ---
 
-## Deployment Instructions
+## Keyset Pagination Verification
 
-### Database (MongoDB Atlas Free Tier)
-1. Register/Login to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
-2. Create a free **M0 Cluster**.
-3. Under Database Access, create a database user and copy the username & password.
-4. Under Network Access, add `0.0.0.0/3` to allow access from Render/Vercel.
-5. Retrieve your cluster Connection String (e.g. `mongodb+srv://<user>:<password>@cluster.mongodb.net/codevector?retryWrites=true&w=majority`).
-
-### Backend (Render Free Web Service)
-1. Sign up/Login to [Render](https://render.com).
-2. Click **New +** and select **Web Service**.
-3. Link your GitHub repository.
-4. Set the **Root Directory** to `backend`.
-5. Set the **Build Command** to `npm install`.
-6. Set the **Start Command** to `npm start`.
-7. Under **Environment Variables**, add:
-   * `MONGODB_URI` = `<Your MongoDB Atlas connection URI>`
-   * `PORT` = `5000`
-8. Click deploy. Render will assign you a public URL (e.g., `https://codevector-api.onrender.com`).
-
-### Seed MongoDB in Production
-After the Render deployment succeeds, trigger the seed process online using the Render shell console or by running the script locally against the Atlas database URI (by setting `MONGODB_URI` to your Atlas cluster in your local `.env` file and running `npm run seed`).
-
-### Frontend (Vercel Free Tier)
-1. Sign up/Login to [Vercel](https://vercel.com).
-2. Click **Add New** and choose **Project**.
-3. Select your GitHub repository.
-4. Under Project Settings:
-   * Set **Framework Preset** to `Next.js`.
-   * Set the **Root Directory** to `frontend`.
-5. Under **Environment Variables**, add:
-   * `NEXT_PUBLIC_API_URL` = `<Your deployed Render API URL>` (e.g. `https://codevector-api.onrender.com`)
-6. Click **Deploy**.
+To test and verify pagination stability under concurrent inserts:
+```bash
+cd backend
+node test.js
+```
+This automated script queries pages, inserts mock products in the background, and asserts that pagination remains completely consistent without duplicates or skips.
