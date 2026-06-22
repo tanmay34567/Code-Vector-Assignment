@@ -209,9 +209,9 @@ app.post('/api/products/simulate', async (req, res) => {
   }
 });
 
-// 4. GET /api/ping - Simple ping endpoint for keep-alive
-app.get('/api/ping', (req, res) => {
-  res.json({ success: true, message: 'pong', timestamp: new Date() });
+// Health check endpoint for cron-job pinging
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date() });
 });
 
 // Global error handler
@@ -220,39 +220,12 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
-// Self-ping function to prevent Render free-tier cold starts
-function startSelfPing() {
-  const selfUrl = process.env.RENDER_EXTERNAL_URL;
-  if (!selfUrl) {
-    console.log('RENDER_EXTERNAL_URL not set. Self-ping skipped.');
-    return;
-  }
-
-  const pingUrl = `${selfUrl.replace(/\/$/, '')}/api/ping`;
-  const https = require('https');
-
-  // Ping every 14 minutes (840,000 ms) to keep the app active
-  const INTERVAL = 14 * 60 * 1000;
-
-  setInterval(() => {
-    https.get(pingUrl, (res) => {
-      console.log(`[Self-Ping] Ping sent to ${pingUrl}. Status: ${res.statusCode}`);
-    }).on('error', (err) => {
-      console.error(`[Self-Ping] Error pinging ${pingUrl}: ${err.message}`);
-    });
-  }, INTERVAL);
-
-  console.log(`[Self-Ping] Self-ping loop started for: ${pingUrl}`);
-}
-
 // Start server after connecting to database
 async function startServer() {
   try {
     await connectDB();
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
-      // Initialize self-ping
-      startSelfPing();
     });
   } catch (error) {
     console.error('Failed to start server:', error);
@@ -261,4 +234,3 @@ async function startServer() {
 }
 
 startServer();
-
