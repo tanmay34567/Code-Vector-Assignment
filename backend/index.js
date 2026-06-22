@@ -211,6 +211,7 @@ app.post('/api/products/simulate', async (req, res) => {
 
 // Health check endpoint for cron-job pinging
 app.get('/health', (req, res) => {
+  console.log(`[Cron-Job] Keep-alive ping received at ${new Date().toISOString()}`);
   res.status(200).json({ status: 'ok', timestamp: new Date() });
 });
 
